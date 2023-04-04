@@ -12,13 +12,8 @@
       <button class="primary" @click="currentPage = currentPage < pages ? currentPage + 1 : pages">Next</button>
       <button class="primary" @click="fullscreen = !fullscreen">fullscreen</button>
     </div>
-    <div
-         class="pdf-viewer__content"
-         @touchstart="onTouchStart"
-         @touchmove="onTouchMove"
-         @touchend="onTouchEnd"
-    >
-      <div class="pdf-viewer__wrapper">
+    <div class="pdf-viewer__content">
+      <div  ref="wrapper"  class="pdf-viewer__wrapper">
         <VuePDF class="pdf-viewer__pdf" :pdf="pdf" :page="currentPage" :scale="scale"/>
       </div>
     </div>
@@ -29,7 +24,7 @@
 import { usePDF, VuePDF } from "@tato30/vue-pdf";
 import url from '@/assets/files/mexanicna_filtraciya_01_de.pdf'
 import { component } from 'vue-fullscreen'
-
+import PinchZoom from "pinch-zoom-js";
 export default {
   components: {
     VuePDF,
@@ -37,6 +32,7 @@ export default {
   },
   setup() {
     const { pdf, pages } = usePDF(url);
+
     return {
       pdf,
       pages,
@@ -46,49 +42,29 @@ export default {
     scale: 5,
     currentPage: 1,
     fullscreen: false,
-    dist1: 0,
-    dist2: 0
+    pinchZoom: null
   }),
   computed: {
     mainClasses () {
       return {
         'pdf-viewer--fullscreen': this.fullscreen
       }
+    },
+  },
+  watch: {
+    fullscreen (newValue) {
+      if (newValue) {
+        this.pinchZoom.enable()
+      } else {
+        this.pinchZoom.zoomFactor = 1
+        this.pinchZoom.disable()
+      }
     }
   },
-  methods: {
-    onTouchStart (e) {
-      e.preventDefault();
-
-      console.log(e.targetTouches)
-
-      if (e.targetTouches.length === 2) {
-
-        this.dist1 = Math.hypot(
-          e.touches[0].pageX - e.touches[1].pageX,
-          e.touches[0].pageY - e.touches[1].pageY
-        );
-      }
-    },
-    onTouchMove (e) {
-      e.preventDefault();
-      console.log(e.targetTouches)
-
-      if (e.targetTouches.length === 2 && e.changedTouches.length === 2) {
-        this.dist2 = Math.hypot(
-          e.touches[0].pageX - e.touches[1].pageX,
-          e.touches[0].pageY - e.touches[1].pageY);
-        if(this.dist1>this.dist2) {
-          console.log('zoom out');
-        }
-        if(this.dist1<this.dist2) {
-          console.log('zoom in');
-        }
-      }
-    },
-    onTouchEnd () {
-
-    }
+  mounted() {
+    this.pinchZoom = new PinchZoom(this.$refs.wrapper, {})
+    console.log(this.pinchZoom)
+    this.pinchZoom.disable()
   }
 };
 </script>
@@ -99,19 +75,24 @@ export default {
 }
 .pdf-viewer--fullscreen .pdf-viewer__content {
   flex: 1;
-  overflow: auto;
+  height: 100%;
+  display: flex;
 }
 .pdf-viewer__actions {
   display: flex;
   gap: 10px;
   align-items: center;
 }
-.pdf-viewer__wrapper {
-  zoom: 1;
-}
+
 .pdf-viewer__pdf canvas {
     width:  100% !important;
     height: auto !important;
+}
+.pdf-viewer__wrapper {
+  position: relative !important;
+}
+.pinch-zoom-container {
+  height: auto !important;
 }
 </style>
 
