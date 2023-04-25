@@ -18,6 +18,6 @@ export default {
   border: 1px solid black;
   border-radius: 16px;
   padding: 16px;
-  width: 300px;
+  width: 700px;
 }
 </style>

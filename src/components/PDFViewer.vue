@@ -1,34 +1,41 @@
 <template>
-  <fullscreen
+  <BaseFullscreen
               v-model="fullscreen"
               class="pdf-viewer"
               :class="mainClasses"
-              teleport
 
   >
     <div class="pdf-viewer__actions">
-      <button class="primary" @click="currentPage = currentPage > 1 ? currentPage - 1 : 1">Prev</button>
-      <div>{{ currentPage }} / {{ pages }}</div>
-      <button class="primary" @click="currentPage = currentPage < pages ? currentPage + 1 : pages">Next</button>
       <button class="primary" @click="fullscreen = !fullscreen">fullscreen</button>
+      <button class="primary" @click="zoomIn">+</button>
+      <button class="primary" @click="zoomOut">-</button>
     </div>
     <div class="pdf-viewer__content">
-      <div  ref="wrapper"  class="pdf-viewer__wrapper">
-        <VuePDF class="pdf-viewer__pdf" :pdf="pdf" :page="currentPage" :scale="scale"/>
-      </div>
+      <BaseZoom
+              ref="baseZoom"
+                v-model="zoom"
+                class="pdf-viewer__wrapper"
+                aspect-ratio="16/9"
+                :disable-aspect-ratio="fullscreen"
+      >
+        <div v-for="(page, key) of pages" :key="key">
+          <VuePDF class="pdf-viewer__pdf" :pdf="pdf" :page="page" :scale="scale"/>
+        </div>
+      </BaseZoom>
     </div>
-  </fullscreen>
+  </BaseFullscreen>
 </template>
 
 <script>
 import { usePDF, VuePDF } from "@tato30/vue-pdf";
-import url from '@/assets/files/mexanicna_filtraciya_01_de.pdf'
-import { component } from 'vue-fullscreen'
-import PinchZoom from "pinch-zoom-js";
+import url from '@/assets/files/Andrei_Zabelin.pdf'
+import BaseZoom from "@/components/BaseZoom.vue";
+import BaseFullscreen from "@/components/BaseFullscreen.vue";
 export default {
   components: {
+    BaseFullscreen,
+    BaseZoom,
     VuePDF,
-    fullscreen: component,
   },
   setup() {
     const { pdf, pages } = usePDF(url);
@@ -40,9 +47,10 @@ export default {
   },
   data: () => ({
     scale: 5,
-    currentPage: 1,
     fullscreen: false,
-    pinchZoom: null
+    zoom: 1,
+    maxZoom: 5,
+    minZoom: 1
   }),
   computed: {
     mainClasses () {
@@ -52,20 +60,24 @@ export default {
     },
   },
   watch: {
-    fullscreen (newValue) {
-      if (newValue) {
-        this.pinchZoom.enable()
-      } else {
-        this.pinchZoom.zoomFactor = 1
-        this.pinchZoom.disable()
+    fullscreen () {
+      this.$nextTick(() => {
+        this.$refs.baseZoom.reset()
+      })
+    }
+  },
+  methods: {
+    zoomIn () {
+      if (this.zoom < this.maxZoom) {
+        this.zoom += 1
+      }
+    },
+    zoomOut () {
+      if (this.zoom > this.minZoom) {
+        this.zoom -= 1
       }
     }
   },
-  mounted() {
-    this.pinchZoom = new PinchZoom(this.$refs.wrapper, {})
-    console.log(this.pinchZoom)
-    this.pinchZoom.disable()
-  }
 };
 </script>
 <style>
@@ -78,10 +90,20 @@ export default {
   height: 100%;
   display: flex;
 }
+.pdf-viewer__content {
+  overflow: hidden;
+}
 .pdf-viewer__actions {
   display: flex;
   gap: 10px;
   align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+button {
+  min-width: 48px;
+  height: 48px;
 }
 
 .pdf-viewer__pdf canvas {
