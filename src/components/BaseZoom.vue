@@ -2,17 +2,18 @@
   <div
     v-hammer:pan="onPanMove"
     v-hammer:panend="onPanEnd"
+    v-hammer:panstart="onPanStart"
     class="base-zoom"
     :class="mainClasses"
     :style="mainStyles"
-    @mousedown="onPanStart"
+    @mousedown="onMouseDown"
     @scroll="onScroll"
   >
     <div
-        ref="inner"
-        class="base-zoom__inner"
-      >
-        <slot/>
+      ref="inner"
+      class="base-zoom__inner"
+    >
+      <slot/>
     </div>
   </div>
 
@@ -21,8 +22,6 @@
 <script>
 import getScrollbarHeight from "@/utils/getScrollbarHeight";
 import getScrollbarWidth from "@/utils/getScrollbarWidth";
-import getMaxScrollX from "@/utils/getMaxScrollX";
-import getMaxScrollY from "@/utils/getMaxScrollY";
 import clickedOnScrollbar from "@/utils/clickedOnScrollbar";
 const initialState = () => ({
   isPan: false,
@@ -100,6 +99,9 @@ export default {
         this.isPan = true
       }
     },
+    onMouseDown () {
+      this.isPan = true
+    },
     onScroll (e) {
       if (!this.isPan) {
         this.scrollY = e.target.scrollTop
@@ -141,8 +143,8 @@ export default {
     },
     onPanMove (e) {
       if (this.isPan) {
-        const maxScrollY = getMaxScrollY(this.$el)
-        const maxScrollX = getMaxScrollX(this.$el)
+        const maxScrollY = this.$refs.inner.clientHeight - this.$el.clientHeight
+        const maxScrollX = this.$refs.inner.clientWidth - this.$el.clientWidth
         this.scrollY = this.lastScrollY - e.deltaY
         this.scrollX = this.lastScrollX - e.deltaX
         if (this.scrollY < 0) {
@@ -161,11 +163,11 @@ export default {
       }
     },
     setLastScrollX () {
-      const maxScrollX = getMaxScrollX(this.$el)
+      const maxScrollX = this.$refs.inner.clientWidth - this.$el.clientWidth
       this.lastScrollX = this.scrollX < maxScrollX ? this.scrollX : maxScrollX
     },
     setLastScrollY () {
-      const maxScrollY = getMaxScrollY(this.$el)
+      const maxScrollY = this.$refs.inner.clientHeight - this.$el.clientHeight
       this.lastScrollY = this.scrollY < maxScrollY ? this.scrollY : maxScrollY
     },
     onPanEnd () {
@@ -200,4 +202,3 @@ export default {
   aspect-ratio: unset !important;
 }
 </style>
-
