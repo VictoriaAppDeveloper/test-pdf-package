@@ -18,6 +18,11 @@ export default {
   border: 1px solid black;
   border-radius: 16px;
   padding: 16px;
-  width: 700px;
+  max-width: 700px;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
 }
 </style>
